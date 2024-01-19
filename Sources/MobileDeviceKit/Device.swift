@@ -3,7 +3,7 @@ import CMobileDeviceKit
 public class Device: Identifiable {
     var deviceRef: AMDeviceRef
 
-    public internal(set) var deniedTrust: Bool = false
+    public internal(set) var userDeniedPairing: Bool = false
     public internal(set) var isConnected: Bool = false
     public internal(set) var deviceInformation: DeviceInformation?
     // public internal(set) var diskUsage: DiskUsage?
