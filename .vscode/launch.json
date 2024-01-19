@@ -1,0 +1,32 @@
+{
+    // 使用 IntelliSense 以得知可用的屬性。
+    // 暫留以檢視現有屬性的描述。
+    // 如需詳細資訊，請瀏覽: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "lldb",
+            "request": "launch",
+            "sourceLanguages": [
+                "swift"
+            ],
+            "args": [],
+            "cwd": "${workspaceFolder:MobileDeviceKit}",
+            "name": "Debug MobileDeviceKitDemo",
+            "program": "${workspaceFolder:MobileDeviceKit}/.build/debug/MobileDeviceKitDemo",
+            "preLaunchTask": "swift: Build Debug MobileDeviceKitDemo"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "sourceLanguages": [
+                "swift"
+            ],
+            "args": [],
+            "cwd": "${workspaceFolder:MobileDeviceKit}",
+            "name": "Release MobileDeviceKitDemo",
+            "program": "${workspaceFolder:MobileDeviceKit}/.build/release/MobileDeviceKitDemo",
+            "preLaunchTask": "swift: Build Release MobileDeviceKitDemo"
+        }
+    ]
+}
