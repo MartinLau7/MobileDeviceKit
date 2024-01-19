@@ -1,19 +1,20 @@
 MobileDeviceKit
 ---
 
-基于 MobileDevice.framework 封装的 iOS 设备连接库，支持 iOS 7.0 及以上版本。
+iOS device connection library built on top of the MobileDevice.framework, supporting iOS 7.0 and above.
 
-## 要求
+## Requirements
 - iOS 7.0+
 - macOS 13+
 - Xcode 15.0+
 - Swift 5.9+
 
-## 功能
-- 设备连接
-- 设备信息（基础信息 / 存储信息 / 电池信息）
-- 设备画面截取
-- 应用管理（安装 / 卸载 /  列表）
-- 文件管理（上传 / 下载 / 列表）
-- 描述文件管理 （安装 / 卸载 / 列表）
+## Features
+- Device Connection
+- Device Information (Basic / Storage / Battery)
+- Device Screen Capture
+- App Management (Install / Uninstall / List)
+- File Management (Upload / Download / List)
+- Provisioning Profile Management (Install / Uninstall / List)
 
+**Note: This library is currently under development and is not suitable for use in a production environment.**
