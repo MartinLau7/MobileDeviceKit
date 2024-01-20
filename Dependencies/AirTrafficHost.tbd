@@ -1,0 +1,39 @@
+--- !tapi-tbd
+tbd-version:     4
+targets:         [ x86_64-macos, arm64e-macos ]
+uuids:
+  - target:          x86_64-macos
+    value:           C0B8F48D-B2EF-313F-9CFA-586B9A7BBBBF
+  - target:          arm64e-macos
+    value:           D2EAA440-2D1C-3906-8BF5-460A14369964
+install-name:    '/System/Library/PrivateFrameworks/AirTrafficHost.framework/Versions/A/AirTrafficHost'
+current-version: 116
+exports:
+  - targets:         [ x86_64-macos, arm64e-macos ]
+    symbols:         [ _ATCFMessageCreate, _ATCFMessageGetName, _ATCFMessageGetParam, 
+                       _ATCFMessageGetSessionNumber, _ATCFMessageVerify, _ATGetProcessLinkLevel, 
+                       _ATHostAMDeviceSocketCreate, _ATHostAMDeviceSocketDestroy, 
+                       _ATHostAMDeviceSocketWrite, _ATHostAdvertiserStartWakeupService, 
+                       _ATHostAdvertiserStopWakeupService, _ATHostConnectionCreate, 
+                       _ATHostConnectionCreateWithCallbacks, _ATHostConnectionCreateWithLibrary, 
+                       _ATHostConnectionCreateWithQueryCallback, _ATHostConnectionDestroy, 
+                       _ATHostConnectionGetCurrentSessionNumber, _ATHostConnectionGetGrappaSessionId, 
+                       _ATHostConnectionInvalidate, _ATHostConnectionReadMessage, 
+                       _ATHostConnectionRelease, _ATHostConnectionRetain, _ATHostConnectionSendAssetCompleted, 
+                       _ATHostConnectionSendAssetCompletedWithMetadata, _ATHostConnectionSendAssetMetricsRequest, 
+                       _ATHostConnectionSendFileBegin, _ATHostConnectionSendFileError, 
+                       _ATHostConnectionSendFileErrorWithParams, _ATHostConnectionSendFileProgress, 
+                       _ATHostConnectionSendHostInfo, _ATHostConnectionSendMessage, 
+                       _ATHostConnectionSendMetadataSyncFinished, _ATHostConnectionSendPing, 
+                       _ATHostConnectionSendPowerAssertion, _ATHostConnectionSendStatusMessage, 
+                       _ATHostConnectionSendSyncFailed, _ATHostConnectionSendSyncRequest, 
+                       _ATHostCreateDeviceServiceConnection, _ATHostDeviceNotificationObserverCreate, 
+                       _ATHostDeviceNotificationObserverDestroy, _ATHostDeviceObserverCreate, 
+                       _ATHostDeviceObserverDestroy, _ATHostDeviceObserverIsAttached, 
+                       _ATHostGetLogCategory, _ATHostMessageLinkCreate, _ATHostMessageLinkDestroy, 
+                       _ATHostMessageLinkSendMessage, _ATHostWaitForQueueToDrain, 
+                       _ATProcessLinkCopyMessageFromChild, _ATProcessLinkExitChild, 
+                       _ATProcessLinkInitializeChild, _ATProcessLinkInvalidate, _ATProcessLinkRelease, 
+                       _ATProcessLinkRetain, _ATProcessLinkRunChild, _ATProcessLinkSendMessage, 
+                       _ATProcessLinkSendMessageToParent, _ATProcessLinkSetupParent ]
+...
