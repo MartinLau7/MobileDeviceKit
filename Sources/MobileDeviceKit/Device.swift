@@ -20,7 +20,20 @@ public class Device: Identifiable {
     }
 
     public var isPaired: Bool {
-        return isDevicePaired(deviceRef)
+        // if let _ = try? validatePairing(deviceRef) {
+        //     return true
+        // }
+        // return false
+
+        do {
+            try validatePairing(deviceRef)
+            return true
+        } catch let error as MobileDeviceError {
+            print(error)
+            return false
+        } catch {
+            return false
+        }
     }
 
     public var isPasswordProtected: Bool {

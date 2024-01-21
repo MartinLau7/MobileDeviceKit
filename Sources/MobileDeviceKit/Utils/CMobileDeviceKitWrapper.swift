@@ -33,10 +33,6 @@ func validatePairing(_ deviceRef: AMDeviceRef) throws {
     try MobileDeviceError.checkError { AMDeviceValidatePairing(deviceRef) }
 }
 
-func isDevicePaired(_ deviceRef: AMDeviceRef) -> Bool {
-    return AMDeviceIsPaired(deviceRef) == 1
-}
-
 func pairDevice(_ deviceRef: AMDeviceRef) throws {
     return try MobileDeviceError.checkError { AMDevicePair(deviceRef) }
 }

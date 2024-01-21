@@ -80,7 +80,7 @@ public final class MobileDeviceManager: ObservableObject {
         // for device in connectedDevices {
         //     device.dispose()
         // }
-        // connectedDevices.removeAll()
+        connectedDevices.removeAll()
     }
 
     private func notify(callbackInfo: AMDeviceNotificationInfo) {
@@ -94,9 +94,11 @@ public final class MobileDeviceManager: ObservableObject {
                     return
                 }
                 let device = Device(deviceRef)
+                print("当前连接设备: \(device.uniqueDeviceId) \(device.isPaired ? "已配对" : "未配对信任")")
                 connectedDevices.append(device)
                 notifyDeviceConnected(device.uniqueDeviceId)
             case kAMDeviceDetached:
+                print("当前断开设备: \(uniqueDeviceId)")
                 disConnect(with: uniqueDeviceId)
             case kAMDevicePaired:
                 if let appleDevice = connectedDevices.first(where: { $0.deviceInformation?.uniqueDeviceId == uniqueDeviceId }) {
@@ -203,13 +205,13 @@ public final class MobileDeviceManager: ObservableObject {
         // }
     }
 
-    public func disConnect(with _: String) {
-        // connectedDevices.removeAll {
-        //     if $0.deviceInformation.uniqueDeviceId == uniqueDeviceId {
-        //         notifyDeviceDisconnected(uniqueDeviceId)
-        //         return true
-        //     }
-        //     return false
-        // }
+    public func disConnect(with uniqueDeviceId: String) {
+        connectedDevices.removeAll {
+            if $0.deviceInformation?.uniqueDeviceId == uniqueDeviceId {
+                notifyDeviceDisconnected(uniqueDeviceId)
+                return true
+            }
+            return false
+        }
     }
 }
