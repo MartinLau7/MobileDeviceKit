@@ -298,7 +298,7 @@ extern "C" {
      * Returns kAMDNoWifiSyncSupportError if the device does not support WiFi sync.
      * See enum WirelessBuddyOptions for a description of the options.
      */
-    AMDError AMDeviceSetWirelessBuddyFlags( AMDeviceRef device,    CFOptionFlags flags);
+    AMDError AMDeviceSetWirelessBuddyFlags( AMDeviceRef device, CFOptionFlags flags);
     
     /*!
      * @function AMDeviceGetWirelessBuddyFlags

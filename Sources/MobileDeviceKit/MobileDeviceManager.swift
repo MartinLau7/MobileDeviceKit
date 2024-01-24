@@ -1,12 +1,7 @@
 import CMobileDeviceKit
+import Logging
 
-public protocol MobileDeviceManagerProtocol {
-    func deviceRequestingUnlock(device: Device)
-
-    func deviceRequestingTrust(device: Device)
-
-    func deviceTrustFailed(udid: String, errorMsg: String)
-
+public protocol MobileDeviceConnectionDelegate {
     func deviceDisconnected(udid: String)
 
     func deviceConnected(udid: String)
@@ -18,16 +13,9 @@ public final class MobileDeviceManager: ObservableObject {
 
     public internal(set) var connectedDevices: [Device] = []
 
-    public var delegate: MobileDeviceManagerProtocol?
+    public var delegate: MobileDeviceConnectionDelegate?
 
-    private static var _shareInstance: MobileDeviceManager?
-    public static let `default`: MobileDeviceManager = {
-        guard let _shareInstance else {
-            _shareInstance = MobileDeviceManager()
-            return _shareInstance!
-        }
-        return _shareInstance
-    }()
+    public var logger: Logger
 
     deinit {
         #if DEBUG
@@ -35,23 +23,12 @@ public final class MobileDeviceManager: ObservableObject {
         #endif
     }
 
-    // MARK: - Private
-
-    private init() {
+    public init(logger: Logger = .init(label: "org.martinlau.MobileDeviceKit.MobileDeviceManager")) {
+        self.logger = logger
         startListeningDevicesConnection()
     }
 
-    private func notifyDeviceRequestingUnlock(device: Device) {
-        delegate?.deviceRequestingUnlock(device: device)
-    }
-
-    private func notifyDeviceRequestingTrust(device: Device) {
-        delegate?.deviceRequestingTrust(device: device)
-    }
-
-    private func notifyDeviceTrustFailed(_ udid: String, errorMsg: String = "使用者拒绝信任请求, 请中断并重新连接你的设备.") {
-        delegate?.deviceTrustFailed(udid: udid, errorMsg: errorMsg)
-    }
+    // MARK: - Private
 
     private func notifyDeviceConnected(_ uuid: String) {
         delegate?.deviceConnected(udid: uuid)
@@ -62,7 +39,7 @@ public final class MobileDeviceManager: ObservableObject {
     }
 
     /// 是否iOS7 之前的版本
-    private func isBefore7Version(device: AMDeviceRef) -> Bool {
+    private func isDeviceBefore7Version(_ device: AMDeviceRef) -> Bool {
         if let value = try? copyValueFromDevice(device, domain: nil, key: "ProductVersion", basePaired: false) as? String {
             if let productVersion = Version(value), productVersion.major >= 7 {
                 return false
@@ -73,44 +50,40 @@ public final class MobileDeviceManager: ObservableObject {
     }
 
     private func containsDevice(with uniqueDeviceId: String) -> Bool {
-        return connectedDevices.contains { $0.deviceInformation?.uniqueDeviceId == uniqueDeviceId }
+        return connectedDevices.contains { $0.uniqueDeviceId == uniqueDeviceId }
     }
 
     private func disconnectAllDevices() {
-        // for device in connectedDevices {
-        //     device.dispose()
-        // }
+        for device in connectedDevices {
+            device.dispose()
+        }
         connectedDevices.removeAll()
     }
 
     private func notify(callbackInfo: AMDeviceNotificationInfo) {
         if let deviceRef = callbackInfo.Device {
-            guard !isBefore7Version(device: deviceRef) else { return }
+            guard getDeviceInterfaceType(deviceRef) == .wired else { return }
+            guard !isDeviceBefore7Version(deviceRef) else { return }
             let uniqueDeviceId = copyDeviceIdentifier(deviceRef) as String
+            logger.debug("触发事件装置 ID: \(uniqueDeviceId)")
 
             switch callbackInfo.Action {
             case kAMDeviceAttached:
                 guard !containsDevice(with: uniqueDeviceId) else {
                     return
                 }
-                let device = Device(deviceRef)
-                print("当前连接设备: \(device.uniqueDeviceId) \(device.isPaired ? "已配对" : "未配对信任")")
+                let device = Device(deviceRef, logger: logger)
+                logger.debug("attached to device: \(device.uniqueDeviceId) - (\(device.isPaired ? "paried" : "unpair"))")
+
                 connectedDevices.append(device)
                 notifyDeviceConnected(device.uniqueDeviceId)
             case kAMDeviceDetached:
-                print("当前断开设备: \(uniqueDeviceId)")
+                logger.debug("当前断开设备: \(uniqueDeviceId)")
                 disConnect(with: uniqueDeviceId)
             case kAMDevicePaired:
-                if let appleDevice = connectedDevices.first(where: { $0.deviceInformation?.uniqueDeviceId == uniqueDeviceId }) {
-                    do {
-                        if !appleDevice.isPaired {
-                            // try appleDevice.try2PairDevice()
-                        }
-                        // try? appleDevice.try2ConnectDevice()
-                        // notifyDeviceConnected(appleDevice.deviceInformation.uniqueDeviceId)
-                    } catch {
-                        print("connecting error: ", error.localizedDescription)
-                    }
+                if let device = connectedDevices.first(where: { $0.uniqueDeviceId == uniqueDeviceId }) {
+                    device.requestDevicePairingStatus()
+                    logger.debug("attached to device: \(device.uniqueDeviceId) - (\(device.isPaired ? "paried" : "unpair"))")
                 }
             case kAMDeviceNotificationStopped:
                 print("设备订阅被取消或异常")
@@ -123,6 +96,7 @@ public final class MobileDeviceManager: ObservableObject {
     /// 監聽裝置連線
     @discardableResult private func startListeningDevicesConnection() -> Bool {
         if !subscribed {
+            logger.debug("startListeningDevices")
             let selfPtr = Marshal.toUnretained(self)
             // 只监听 USB 连接装置
             if AMDeviceNotificationSubscribe({ notificationInfo, arg in
@@ -142,72 +116,23 @@ public final class MobileDeviceManager: ObservableObject {
 
     /// 取消監聽裝置連線
     @discardableResult private func stopListeningDeviceConnection() -> Bool {
-        if let notification = subscribeNotification {
+        if let subscribeNotification {
             subscribed = false
-            return AMDeviceNotificationUnsubscribe(notification) == 0
+            return AMDeviceNotificationUnsubscribe(subscribeNotification) == 0
         }
         return true
     }
 
     // MARK: - Public
 
-    public func tryTrustDevice(_: Device) {
-        // do {
-        //     try device.try2PairDevice()
-        // } catch let err as MobileDeviceError {
-        //     var errorMsg = err.localizedDescription
-        //     if err == .userDeniedPairing {
-        //         errorMsg = "使用者拒绝信任请求, 请中断并重新连接你的设备."
-        //     }
-        //     self.notifyDeviceTrustFailed(device.deviceInformation.uniqueDeviceId, errorMsg: errorMsg)
-        // } catch {
-        //     #if DEBUG
-        //         print("tryTrustDevice Failed: ", error)
-        //     #endif
-        //     notifyDeviceTrustFailed(device.deviceInformation.uniqueDeviceId, errorMsg: error.localizedDescription)
-        // }
-    }
-
-    public func tryWatchTrustDeviceAsync(_: Device, timeout _: TimeInterval) {
-        // DispatchQueue.global().async {
-        //     let timeoutDate = Date().addingTimeInterval(timeout)
-        //     var errorMessage = "Trust Timeout."
-        //     while !device.isPaired && !device.deniedTrust {
-        // do {
-        //     try device.try2PairDevice()
-        // } catch let err as MobileDeviceError {
-        //     errorMessage = err.localizedDescription
-        //     if err == .userDeniedPairing {
-        //         errorMessage = "使用者拒绝信任请求, 请中断并重新连接你的设备."
-        //         break
-        //     }
-        //     if err == .pairingDialogResponsePending || err == .passwordProtected {
-        //         if Date() >= timeoutDate {
-        //             errorMessage = "Trust Timeout."
-        //             break
-        //         }
-        //     }
-        //     sleep(1)
-        // } catch {
-        //     errorMessage = error.localizedDescription
-        //     sleep(1)
-        // }
-        // }
-        // DispatchQueue.main.async {
-        //     if device.deniedTrust {
-        //         self.notifyDeviceTrustFailed(device.deviceInformation.uniqueDeviceId, errorMsg: "使用者拒绝信任请求, 请中断并重新连接你的设备.")
-        //         return
-        //     }
-        //     if !device.isPaired {
-        //         self.notifyDeviceTrustFailed(device.deviceInformation.uniqueDeviceId, errorMsg: errorMessage)
-        //     }
-        // }
-        // }
+    public func dispose() {
+        stopListeningDeviceConnection()
+        disconnectAllDevices()
     }
 
     public func disConnect(with uniqueDeviceId: String) {
         connectedDevices.removeAll {
-            if $0.deviceInformation?.uniqueDeviceId == uniqueDeviceId {
+            if $0.uniqueDeviceId == uniqueDeviceId {
                 notifyDeviceDisconnected(uniqueDeviceId)
                 return true
             }

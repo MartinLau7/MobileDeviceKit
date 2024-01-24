@@ -1,54 +1,26 @@
 import CMobileDeviceKit
+import Logging
+
+// TODO: 添加设备配对状态改变事件
 
 public class Device: Identifiable {
-    var deviceRef: AMDeviceRef
+    private var deviceRef: AMDeviceRef
+    private let logger: Logger
 
     public internal(set) var userDeniedPairing: Bool = false
-    public internal(set) var isConnected: Bool = false
-    public internal(set) var deviceInformation: DeviceInformation?
+    /// The returned value is only valid when unpaired
+    public internal(set) var isPasswordProtected: Bool = false
+    public internal(set) var isPaired: Bool = false
+
+    // public internal(set) var deviceInformation: DeviceInformation?
     // public internal(set) var diskUsage: DiskUsage?
 
     public var id: String {
-        if let deviceInformation {
-            return deviceInformation.uniqueDeviceId
-        }
         return copyDeviceIdentifier(deviceRef) as String
     }
 
     public var isValidConnect: Bool {
         return AMDeviceIsValid(deviceRef)
-    }
-
-    public var isPaired: Bool {
-        // if let _ = try? validatePairing(deviceRef) {
-        //     return true
-        // }
-        // return false
-
-        do {
-            try validatePairing(deviceRef)
-            return true
-        } catch let error as MobileDeviceError {
-            print(error)
-            return false
-        } catch {
-            return false
-        }
-    }
-
-    public var isPasswordProtected: Bool {
-        if isPaired {
-            do {
-                try validatePairing(deviceRef)
-            } catch let err as MobileDeviceError {
-                if err == .notConnected || err == .passwordProtected {
-                    return true
-                }
-            } catch {
-                return false
-            }
-        }
-        return false
     }
 
     public var uniqueDeviceId: String {
@@ -60,11 +32,67 @@ public class Device: Identifiable {
         return AMDeviceCopyDeveloperModeStatus(deviceRef, &error)
     }
 
-    init(_ deviceRef: AMDeviceRef) {
+    init(_ deviceRef: AMDeviceRef, logger: Logger? = nil) {
+        self.logger = logger ?? .init(label: "org.martinlau.MobileDeviceKit.Device")
         self.deviceRef = deviceRef
+        requestDevicePairingStatus()
     }
 
     deinit {
-        // dispose()
+        dispose()
+    }
+
+    func requestDevicePairingStatus() {
+        do {
+            try validatePairing(deviceRef)
+            isPasswordProtected = false
+            userDeniedPairing = false
+            isPaired = true
+        } catch let err as MobileDeviceError {
+            isPaired = false
+            if err == .notConnected || err == .passwordProtected {
+                isPasswordProtected = true
+            } else if err == .userDeniedPairing {
+                userDeniedPairing = true
+            }
+            print(err.reason)
+            print(err.errorDescription ?? "Unknown error")
+        } catch {}
+    }
+
+    // MARK: - Public -
+
+    public func refreshDeviceInformation() throws -> DeviceInformation? {
+        return try copyDeviceAllValue(deviceRef, basePaired: isPaired)
+    }
+
+    // public func refreshDiskUsageInfo() throws -> DiskUsage {
+    //     if let value = try copyValueFromDevice(deviceRef, domain: kAMDDiskUsageFactoryDomain, key: nil) {
+    //         if let infoDict = value as? [String: Any] {
+    //             return try DiskUsage(infoDict, format: .plist)
+    //         }
+    //     }
+    //     return nil
+    // }
+
+    public func copyDeviceLocationID() -> UInt32 {
+        return AMDeviceCopyDeviceLocation(deviceRef)
+    }
+
+    /// 撷取连接 ID
+    public func getConnectionId() -> UInt32 {
+        return AMDeviceGetConnectionID(deviceRef)
+    }
+
+    public func getInterfaceSpeed() -> UInt32 {
+        return AMDeviceGetInterfaceSpeed(deviceRef)
+    }
+
+    public func enterRecovery() throws {
+        try MobileDeviceError.checkError { AMDeviceEnterRecovery(deviceRef) }
+    }
+
+    public func dispose() {
+        try? releaseDevice(deviceRef)
     }
 }

@@ -29,7 +29,7 @@ func retainDevice(_ deviceRef: AMDeviceRef) throws {
 
 func validatePairing(_ deviceRef: AMDeviceRef) throws {
     try connectDevice(deviceRef)
-    defer { try? disconnect(deviceRef) }
+    defer { try? disconnectDevice(deviceRef) }
     try MobileDeviceError.checkError { AMDeviceValidatePairing(deviceRef) }
 }
 
@@ -49,7 +49,7 @@ func connectDevice(_ deviceRef: AMDeviceRef) throws {
     try MobileDeviceError.checkError { AMDeviceConnect(deviceRef) }
 }
 
-func disconnect(_ deviceRef: AMDeviceRef) throws {
+func disconnectDevice(_ deviceRef: AMDeviceRef) throws {
     return try MobileDeviceError.checkError { AMDeviceDisconnect(deviceRef) }
 }
 
@@ -76,7 +76,7 @@ func getDeviceName(_ device: AMDeviceRef) -> String? {
 
 func copyValueFromDevice(_ deviceRef: AMDeviceRef, domain: String?, key: String?, basePaired: Bool = true) throws -> Any? {
     try connectDevice(deviceRef)
-    defer { try? disconnect(deviceRef) }
+    defer { try? disconnectDevice(deviceRef) }
 
     defer { try? stopDeviceSession(deviceRef) }
     if basePaired {
@@ -86,12 +86,12 @@ func copyValueFromDevice(_ deviceRef: AMDeviceRef, domain: String?, key: String?
     return value?.takeRetainedValue()
 }
 
-// func copyDeviceAllValue(_ deviceRef: AMDeviceRef, basePaired: Bool = true) throws -> DeviceInformation? {
-//     if let value = try copyValueFromDevice(deviceRef, domain: nil, key: nil, basePaired: basePaired) as? [String: Any] {
-//         return try DeviceInformation(value, format: .plist)
-//     }
-//     return nil
-// }
+func copyDeviceAllValue(_ deviceRef: AMDeviceRef, basePaired: Bool = true) throws -> DeviceInformation? {
+    if let value = try copyValueFromDevice(deviceRef, domain: nil, key: nil, basePaired: basePaired) as? [String: Any] {
+        return try DeviceInformation(value, format: .plist)
+    }
+    return nil
+}
 
 // MARK: - AFC(Apple File Connect)
 

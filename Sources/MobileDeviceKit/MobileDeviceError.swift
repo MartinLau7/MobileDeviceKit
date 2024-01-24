@@ -1,4 +1,5 @@
 import CMobileDeviceKit
+import SwiftUI
 
 public struct MobileDeviceError: Error {
     var originalError: AMDError
@@ -70,6 +71,10 @@ public extension MobileDeviceError {
 
     static var notConnected: MobileDeviceError {
         return MobileDeviceError(AMDError(kAMDNotConnectedError))
+    }
+
+    static var invalidHostID: MobileDeviceError {
+        return MobileDeviceError(AMDError(kAMDInvalidHostIDError))
     }
 
     static var passwordProtected: MobileDeviceError {
