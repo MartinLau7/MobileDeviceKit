@@ -4,8 +4,8 @@ import Logging
 // TODO: 添加设备配对状态改变事件
 
 public class Device: Identifiable {
-    private var deviceRef: AMDeviceRef
     private let logger: Logger
+    var deviceRef: AMDeviceRef
 
     public internal(set) var userDeniedPairing: Bool = false
     /// The returned value is only valid when unpaired
