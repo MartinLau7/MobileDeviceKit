@@ -31,6 +31,22 @@ final class App {
     // }
 }
 
+extension App: MobileDeviceConnectionDelegate {
+    func deviceRequestingUnlock(device: MobileDeviceKit.Device) {
+        print(device)
+    }
+
+    func deviceRequestingTrust(device: MobileDeviceKit.Device) {
+        print(device)
+    }
+
+    func deviceTrustFailed(udid _: String, errorMsg _: String) {}
+
+    func deviceDisconnected(udid _: String) {}
+
+    func deviceConnected(udid _: String) {}
+}
+
 @main
 enum Program {
     static func main() throws {
@@ -55,20 +71,4 @@ enum Program {
         _ = App()
         RunLoop.current.run()
     }
-}
-
-extension App: MobileDeviceManagerProtocol {
-    func deviceRequestingUnlock(device: MobileDeviceKit.Device) {
-        print(device)
-    }
-
-    func deviceRequestingTrust(device: MobileDeviceKit.Device) {
-        print(device)
-    }
-
-    func deviceTrustFailed(udid _: String, errorMsg _: String) {}
-
-    func deviceDisconnected(udid _: String) {}
-
-    func deviceConnected(udid _: String) {}
 }

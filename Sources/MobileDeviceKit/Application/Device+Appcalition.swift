@@ -27,7 +27,7 @@ public extension Device {
             "Container",
             "MinimumOSVersion",
             "UIFileSharingEnabled",
-            "SignerIdentity",
+            kSignerIdentityKey,
             "SignatureExpirationDate",
             kiTunesMetadataKey,
         ]
